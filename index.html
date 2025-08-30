@@ -1,0 +1,1619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CyberSim | Enterprise SOC Simulator</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Roboto+Mono:wght@300;400;500&display=swap');
+        
+        :root {
+            --primary-bg: #0a0f1c;
+            --secondary-bg: #1a1f2e;
+            --tertiary-bg: #252a3a;
+            --accent-blue: #3b82f6;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --accent-yellow: #f59e0b;
+            --accent-purple: #8b5cf6;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border: #334155;
+            --border-light: #475569;
+            --success: #22c55e;
+            --warning: #eab308;
+            --danger: #dc2626;
+            --info: #06b6d4;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--primary-bg);
+            color: var(--text-primary);
+            overflow-x: hidden;
+        }
+
+        /* Layout */
+        .soc-container {
+            display: grid;
+            grid-template-columns: 280px 1fr 320px;
+            grid-template-rows: 60px 1fr;
+            height: 100vh;
+            gap: 1px;
+            background: var(--border);
+        }
+
+        /* Header */
+        .soc-header {
+            grid-column: 1 / -1;
+            background: var(--secondary-bg);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .soc-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--accent-blue);
+        }
+
+        .soc-logo i {
+            font-size: 1.3rem;
+        }
+
+        .soc-status {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .status-indicator.green { background: var(--success); }
+        .status-indicator.yellow { background: var(--warning); }
+        .status-indicator.red { background: var(--danger); }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            background: var(--tertiary-bg);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--accent-blue);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        /* Left Sidebar - Navigation */
+        .soc-sidebar {
+            background: var(--secondary-bg);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .nav-section {
+            padding: 1rem;
+        }
+
+        .nav-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 0.75rem;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 0.25rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .nav-item:hover {
+            background: var(--tertiary-bg);
+        }
+
+        .nav-item.active {
+            background: var(--accent-blue);
+            color: white;
+        }
+
+        .nav-item i {
+            width: 16px;
+            text-align: center;
+        }
+
+        .nav-badge {
+            margin-left: auto;
+            background: var(--accent-red);
+            color: white;
+            padding: 0.125rem 0.375rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        /* Main Dashboard */
+        .soc-main {
+            background: var(--primary-bg);
+            overflow-y: auto;
+            padding: 1.5rem;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            grid-template-rows: auto auto 1fr;
+            gap: 1.5rem;
+            height: calc(100vh - 120px);
+        }
+
+        .dashboard-section {
+            background: var(--secondary-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .section-header {
+            background: var(--tertiary-bg);
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .section-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .section-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-icon {
+            width: 32px;
+            height: 32px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-secondary);
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .btn-icon:hover {
+            background: var(--tertiary-bg);
+            color: var(--text-primary);
+        }
+
+        .section-content {
+            padding: 1.5rem;
+            height: 100%;
+            overflow-y: auto;
+        }
+
+        /* Metrics Cards */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .metric-card {
+            background: var(--tertiary-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+        }
+
+        .metric-card.critical::before { background: var(--danger); }
+        .metric-card.high::before { background: var(--warning); }
+        .metric-card.medium::before { background: var(--info); }
+        .metric-card.low::before { background: var(--success); }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            line-height: 1;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .metric-change {
+            font-size: 0.75rem;
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.25rem;
+        }
+
+        .metric-change.positive { color: var(--success); }
+        .metric-change.negative { color: var(--danger); }
+
+        /* Threat Feed */
+        .threat-feed {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 1.5rem;
+        }
+
+        .events-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .event-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            transition: background 0.2s ease;
+            cursor: pointer;
+        }
+
+        .event-item:hover {
+            background: var(--tertiary-bg);
+        }
+
+        .event-item:last-child {
+            border-bottom: none;
+        }
+
+        .event-severity {
+            width: 8px;
+            height: 40px;
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+
+        .event-severity.critical { background: var(--danger); }
+        .event-severity.high { background: var(--warning); }
+        .event-severity.medium { background: var(--info); }
+        .event-severity.low { background: var(--success); }
+
+        .event-details {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .event-title {
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 0.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .event-description {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            line-height: 1.4;
+            margin-bottom: 0.5rem;
+        }
+
+        .event-meta {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .event-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-shrink: 0;
+        }
+
+        .btn-action {
+            padding: 0.375rem 0.75rem;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-secondary);
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .btn-action:hover {
+            background: var(--tertiary-bg);
+            color: var(--text-primary);
+        }
+
+        .btn-action.primary {
+            background: var(--accent-blue);
+            color: white;
+            border-color: var(--accent-blue);
+        }
+
+        .btn-action.primary:hover {
+            background: #2563eb;
+        }
+
+        /* Right Sidebar - Incident Management */
+        .soc-rightbar {
+            background: var(--secondary-bg);
+            border-left: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .incident-tabs {
+            display: flex;
+            background: var(--tertiary-bg);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .incident-tab {
+            flex: 1;
+            padding: 0.75rem;
+            text-align: center;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            border-right: 1px solid var(--border);
+            transition: all 0.2s ease;
+        }
+
+        .incident-tab:last-child {
+            border-right: none;
+        }
+
+        .incident-tab.active {
+            background: var(--accent-blue);
+            color: white;
+        }
+
+        .incident-tab:not(.active):hover {
+            background: var(--secondary-bg);
+        }
+
+        .incident-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+
+        .incident-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .incident-card {
+            background: var(--tertiary-bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .incident-card:hover {
+            background: var(--primary-bg);
+            border-color: var(--accent-blue);
+        }
+
+        .incident-card.active {
+            border-color: var(--accent-blue);
+            background: var(--primary-bg);
+        }
+
+        .incident-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.75rem;
+        }
+
+        .incident-id {
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: var(--accent-blue);
+        }
+
+        .incident-priority {
+            padding: 0.125rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .incident-priority.critical {
+            background: var(--danger);
+            color: white;
+        }
+
+        .incident-priority.high {
+            background: var(--warning);
+            color: var(--primary-bg);
+        }
+
+        .incident-priority.medium {
+            background: var(--info);
+            color: white;
+        }
+
+        .incident-priority.low {
+            background: var(--success);
+            color: white;
+        }
+
+        .incident-title {
+            font-weight: 600;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+            line-height: 1.3;
+        }
+
+        .incident-details {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+
+        .incident-footer {
+            margin-top: 0.75rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* Charts */
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+
+        .chart-container canvas {
+            background: transparent !important;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .soc-container {
+                grid-template-columns: 260px 1fr 300px;
+            }
+            
+            .metrics-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .soc-container {
+                grid-template-columns: 1fr;
+                grid-template-rows: 60px auto 1fr;
+            }
+            
+            .soc-sidebar,
+            .soc-rightbar {
+                display: none;
+            }
+            
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .metrics-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* Loading States */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 200px;
+            color: var(--text-secondary);
+        }
+
+        .loading i {
+            animation: spin 1s linear infinite;
+            margin-right: 0.5rem;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Alerts */
+        .alert-banner {
+            background: var(--danger);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            text-align: center;
+            font-weight: 500;
+            font-size: 0.875rem;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-100%); }
+            to { transform: translateY(0); }
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: var(--secondary-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        /* Status badges */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .status-badge.investigating {
+            background: var(--info);
+            color: white;
+        }
+
+        .status-badge.resolved {
+            background: var(--success);
+            color: white;
+        }
+
+        .status-badge.escalated {
+            background: var(--danger);
+            color: white;
+        }
+
+        .status-badge.contained {
+            background: var(--warning);
+            color: var(--primary-bg);
+        }
+
+        .status-badge.blocked {
+            background: var(--success);
+            color: white;
+        }
+
+        .status-badge.monitoring {
+            background: var(--accent-purple);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- Critical Alert Banner -->
+    <div class="alert-banner" id="alertBanner" style="display: none;">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span id="alertMessage">Critical security incident detected - All hands on deck!</span>
+    </div>
+
+    <div class="soc-container">
+        <!-- Header -->
+        <header class="soc-header">
+            <div class="soc-logo">
+                <i class="fas fa-shield-alt"></i>
+                <span>CyberSim SOC</span>
+                <span style="font-size: 0.75rem; background: var(--accent-blue); padding: 0.125rem 0.5rem; border-radius: 12px;">v2.1.0</span>
+            </div>
+            
+            <div class="soc-status">
+                <div class="status-item">
+                    <div class="status-indicator green"></div>
+                    <span>Systems Operational</span>
+                </div>
+                <div class="status-item">
+                    <div class="status-indicator yellow"></div>
+                    <span id="activeIncidents">7 Active Incidents</span>
+                </div>
+                <div class="status-item">
+                    <i class="fas fa-clock"></i>
+                    <span id="currentTime">14:32:15 UTC</span>
+                </div>
+            </div>
+            
+            <div class="user-info">
+                <div class="user-avatar">TG</div>
+                <div>
+                    <div style="font-size: 0.875rem; font-weight: 500;">SOC Analyst</div>
+                    <div style="font-size: 0.75rem; color: var(--text-secondary);">Level 2 - Tier 1</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Left Sidebar -->
+        <aside class="soc-sidebar">
+            <div class="nav-section">
+                <div class="nav-title">Dashboard</div>
+                <div class="nav-item active" data-view="overview">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Overview</span>
+                </div>
+                <div class="nav-item" data-view="incidents">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span>Incidents</span>
+                    <span class="nav-badge">7</span>
+                </div>
+                <div class="nav-item" data-view="threats">
+                    <i class="fas fa-bug"></i>
+                    <span>Threat Feed</span>
+                </div>
+                <div class="nav-item" data-view="analytics">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Analytics</span>
+                </div>
+            </div>
+            
+            <div class="nav-section">
+                <div class="nav-title">Investigation</div>
+                <div class="nav-item" data-view="forensics">
+                    <i class="fas fa-search"></i>
+                    <span>Digital Forensics</span>
+                </div>
+                <div class="nav-item" data-view="hunting">
+                    <i class="fas fa-crosshairs"></i>
+                    <span>Threat Hunting</span>
+                </div>
+                <div class="nav-item" data-view="intelligence">
+                    <i class="fas fa-eye"></i>
+                    <span>Threat Intel</span>
+                </div>
+            </div>
+            
+            <div class="nav-section">
+                <div class="nav-title">Response</div>
+                <div class="nav-item" data-view="playbooks">
+                    <i class="fas fa-book"></i>
+                    <span>Playbooks</span>
+                </div>
+                <div class="nav-item" data-view="containment">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Containment</span>
+                </div>
+                <div class="nav-item" data-view="recovery">
+                    <i class="fas fa-undo"></i>
+                    <span>Recovery</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Dashboard -->
+        <main class="soc-main">
+            <!-- Overview Dashboard -->
+            <div id="overview-view" class="view-content">
+                <!-- Metrics Cards -->
+                <div class="metrics-grid">
+                    <div class="metric-card critical">
+                        <div class="metric-value" id="criticalAlerts">12</div>
+                        <div class="metric-label">Critical Alerts</div>
+                        <div class="metric-change negative">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>+3 from yesterday</span>
+                        </div>
+                    </div>
+                    <div class="metric-card high">
+                        <div class="metric-value" id="activeIncidentsCount">7</div>
+                        <div class="metric-label">Active Incidents</div>
+                        <div class="metric-change positive">
+                            <i class="fas fa-arrow-down"></i>
+                            <span>-2 from yesterday</span>
+                        </div>
+                    </div>
+                    <div class="metric-card medium">
+                        <div class="metric-value" id="avgResponseTime">8.3</div>
+                        <div class="metric-label">Avg Response (min)</div>
+                        <div class="metric-change positive">
+                            <i class="fas fa-arrow-down"></i>
+                            <span>-1.2 from target</span>
+                        </div>
+                    </div>
+                    <div class="metric-card low">
+                        <div class="metric-value" id="resolvedToday">23</div>
+                        <div class="metric-label">Resolved Today</div>
+                        <div class="metric-change positive">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>+12 from yesterday</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dashboard Grid -->
+                <div class="dashboard-grid">
+                    <!-- Real-time Threat Map -->
+                    <div class="dashboard-section">
+                        <div class="section-header">
+                            <div class="section-title">
+                                <i class="fas fa-globe"></i>
+                                Real-time Threat Activity
+                            </div>
+                            <div class="section-actions">
+                                <button class="btn-icon" title="Refresh">
+                                    <i class="fas fa-sync-alt"></i>
+                                </button>
+                                <button class="btn-icon" title="Fullscreen">
+                                    <i class="fas fa-expand"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="section-content">
+                            <div class="chart-container">
+                                <canvas id="threatChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Attack Vector Analysis -->
+                    <div class="dashboard-section">
+                        <div class="section-header">
+                            <div class="section-title">
+                                <i class="fas fa-bullseye"></i>
+                                Attack Vectors
+                            </div>
+                        </div>
+                        <div class="section-content">
+                            <div class="chart-container">
+                                <canvas id="vectorChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Live Event Feed -->
+                    <div class="dashboard-section threat-feed">
+                        <div class="section-header">
+                            <div class="section-title">
+                                <i class="fas fa-stream"></i>
+                                Live Security Events
+                                <span class="status-badge investigating">Auto-updating</span>
+                            </div>
+                            <div class="section-actions">
+                                <button class="btn-icon" title="Pause Feed" id="pauseFeed">
+                                    <i class="fas fa-pause"></i>
+                                </button>
+                                <button class="btn-icon" title="Export">
+                                    <i class="fas fa-download"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="section-content" style="padding: 0;">
+                            <div class="events-list" id="eventsList">
+                                <!-- Events will be populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Other views -->
+            <div id="incidents-view" class="view-content" style="display: none;">
+                <div class="loading">
+                    <i class="fas fa-spinner"></i>
+                    Loading incident management interface...
+                </div>
+            </div>
+
+            <div id="threats-view" class="view-content" style="display: none;">
+                <div class="loading">
+                    <i class="fas fa-spinner"></i>
+                    Analyzing threat intelligence feeds...
+                </div>
+            </div>
+
+            <div id="analytics-view" class="view-content" style="display: none;">
+                <div class="loading">
+                    <i class="fas fa-spinner"></i>
+                    Generating analytics reports...
+                </div>
+            </div>
+        </main>
+
+        <!-- Right Sidebar - Incident Management -->
+        <aside class="soc-rightbar">
+            <div class="incident-tabs">
+                <div class="incident-tab active" data-tab="active">Active</div>
+                <div class="incident-tab" data-tab="assigned">Assigned</div>
+                <div class="incident-tab" data-tab="resolved">Resolved</div>
+            </div>
+            
+            <div class="incident-content">
+                <div id="active-incidents" class="tab-content">
+                    <div class="incident-list" id="incidentList">
+                        <!-- Incidents will be populated by JavaScript -->
+                    </div>
+                </div>
+                
+                <div id="assigned-incidents" class="tab-content" style="display: none;">
+                    <div class="incident-list">
+                        <div style="text-align: center; color: var(--text-secondary); padding: 2rem;">
+                            <i class="fas fa-clipboard-check" style="font-size: 2rem; margin-bottom: 1rem; display: block;"></i>
+                            No incidents assigned to you currently
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="resolved-incidents" class="tab-content" style="display: none;">
+                    <div class="incident-list">
+                        <div style="text-align: center; color: var(--text-secondary); padding: 2rem;">
+                            <i class="fas fa-check-circle" style="font-size: 2rem; margin-bottom: 1rem; display: block; color: var(--success);"></i>
+                            23 incidents resolved today<br>
+                            <small>Great work keeping the network secure!</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Incident Detail Modal -->
+    <div class="modal-overlay" id="incidentModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" id="modalTitle">Incident Details</div>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Content populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global SOC State
+        const socState = {
+            currentView: 'overview',
+            currentTab: 'active',
+            feedPaused: false,
+            incidents: [],
+            events: [],
+            metrics: {
+                criticalAlerts: 12,
+                activeIncidents: 7,
+                avgResponseTime: 8.3,
+                resolvedToday: 23
+            }
+        };
+
+        // Sample Security Events
+        const securityEvents = [
+            {
+                id: 'EVT-001',
+                severity: 'critical',
+                title: 'Multiple Failed Login Attempts',
+                description: 'Detected 47 failed login attempts from IP 185.220.70.42 targeting admin accounts',
+                source: 'Authentication System',
+                timestamp: new Date(Date.now() - 300000),
+                iocs: ['185.220.70.42', 'admin@company.com'],
+                category: 'Brute Force Attack',
+                status: 'investigating'
+            },
+            {
+                id: 'EVT-002',
+                severity: 'high',
+                title: 'Malware Detection',
+                description: 'Suspicious executable detected on workstation WS-2847: trojan.win32.backdoor',
+                source: 'Endpoint Protection',
+                timestamp: new Date(Date.now() - 600000),
+                iocs: ['sha256:a1b2c3d4e5f6...', 'C:\\temp\\malware.exe'],
+                category: 'Malware',
+                status: 'contained'
+            },
+            {
+                id: 'EVT-003',
+                severity: 'medium',
+                title: 'Unusual Network Traffic',
+                description: 'Anomalous outbound traffic detected from internal host to external C&C server',
+                source: 'Network Monitoring',
+                timestamp: new Date(Date.now() - 900000),
+                iocs: ['10.0.1.45', 'malicious-domain.com'],
+                category: 'Command & Control',
+                status: 'investigating'
+            },
+            {
+                id: 'EVT-004',
+                severity: 'high',
+                title: 'Phishing Email Campaign',
+                description: 'Mass phishing campaign detected targeting 247 employees with credential harvesting',
+                source: 'Email Security',
+                timestamp: new Date(Date.now() - 1200000),
+                iocs: ['phishing@fake-bank.com', 'malicious.pdf'],
+                category: 'Phishing',
+                status: 'blocked'
+            },
+            {
+                id: 'EVT-005',
+                severity: 'critical',
+                title: 'Privilege Escalation Detected',
+                description: 'User account elevated to domain admin privileges outside normal procedures',
+                source: 'Active Directory',
+                timestamp: new Date(Date.now() - 1800000),
+                iocs: ['user.smith', 'Domain Admins'],
+                category: 'Privilege Escalation',
+                status: 'escalated'
+            }
+        ];
+
+        // Sample Incidents
+        const sampleIncidents = [
+            {
+                id: 'INC-2024-001',
+                priority: 'critical',
+                title: 'APT Group Lateral Movement',
+                description: 'Advanced persistent threat detected moving laterally through network infrastructure',
+                assignee: 'John Smith',
+                status: 'investigating',
+                created: new Date(Date.now() - 3600000),
+                affected_systems: ['DC-01', 'FILE-SRV-02', 'WS-2847'],
+                attack_vector: 'Spear Phishing → Credential Harvesting → Lateral Movement'
+            },
+            {
+                id: 'INC-2024-002',
+                priority: 'high',
+                title: 'Ransomware Encryption Attempt',
+                description: 'Ransomware payload detected attempting to encrypt file shares',
+                assignee: 'Sarah Johnson',
+                status: 'contained',
+                created: new Date(Date.now() - 7200000),
+                affected_systems: ['FILE-SRV-01'],
+                attack_vector: 'Email Attachment → Process Injection → File Encryption'
+            },
+            {
+                id: 'INC-2024-003',
+                priority: 'medium',
+                title: 'Data Exfiltration Attempt',
+                description: 'Suspicious large data transfer detected to external location',
+                assignee: 'Mike Chen',
+                status: 'investigating',
+                created: new Date(Date.now() - 10800000),
+                affected_systems: ['DB-SRV-01'],
+                attack_vector: 'SQL Injection → Database Access → Data Exfiltration'
+            }
+        ];
+
+        // Initialize SOC Dashboard
+        function initSOC() {
+            console.log('🛡️ Initializing CyberSim SOC...');
+            
+            // Set initial state
+            socState.incidents = sampleIncidents;
+            socState.events = securityEvents;
+            
+            // Initialize UI components
+            updateCurrentTime();
+            populateIncidents();
+            populateEvents();
+            initCharts();
+            
+            // Start real-time updates
+            setInterval(updateCurrentTime, 1000);
+            setInterval(simulateNewEvents, 15000);
+            setInterval(updateMetrics, 30000);
+            
+            // Add event listeners
+            addEventListeners();
+            
+            console.log('✅ SOC Dashboard initialized successfully');
+        }
+
+        // Update Current Time
+        function updateCurrentTime() {
+            const now = new Date();
+            const timeString = now.toTimeString().split(' ')[0] + ' UTC';
+            document.getElementById('currentTime').textContent = timeString;
+        }
+
+        // Populate Incidents
+        function populateIncidents() {
+            const incidentList = document.getElementById('incidentList');
+            incidentList.innerHTML = '';
+            
+            socState.incidents.forEach(incident => {
+                const incidentCard = document.createElement('div');
+                incidentCard.className = 'incident-card';
+                incidentCard.dataset.incidentId = incident.id;
+                
+                const timeAgo = getTimeAgo(incident.created);
+                
+                incidentCard.innerHTML = `
+                    <div class="incident-header">
+                        <div class="incident-id">${incident.id}</div>
+                        <div class="incident-priority ${incident.priority}">${incident.priority}</div>
+                    </div>
+                    <div class="incident-title">${incident.title}</div>
+                    <div class="incident-details">${incident.description}</div>
+                    <div class="incident-footer">
+                        <span>${timeAgo}</span>
+                        <span class="status-badge ${incident.status}">${incident.status}</span>
+                    </div>
+                `;
+                
+                incidentCard.addEventListener('click', () => showIncidentDetails(incident));
+                incidentList.appendChild(incidentCard);
+            });
+        }
+
+        // Populate Events
+        function populateEvents() {
+            const eventsList = document.getElementById('eventsList');
+            eventsList.innerHTML = '';
+            
+            socState.events.forEach(event => {
+                const eventItem = document.createElement('div');
+                eventItem.className = 'event-item';
+                
+                const timeAgo = getTimeAgo(event.timestamp);
+                
+                eventItem.innerHTML = `
+                    <div class="event-severity ${event.severity}"></div>
+                    <div class="event-details">
+                        <div class="event-title">
+                            <span>${event.title}</span>
+                            <span class="status-badge ${event.status}">${event.status}</span>
+                        </div>
+                        <div class="event-description">${event.description}</div>
+                        <div class="event-meta">
+                            <span><i class="fas fa-clock"></i> ${timeAgo}</span>
+                            <span><i class="fas fa-server"></i> ${event.source}</span>
+                            <span><i class="fas fa-tag"></i> ${event.category}</span>
+                        </div>
+                    </div>
+                    <div class="event-actions">
+                        <button class="btn-action primary" onclick="createIncident('${event.id}')">Create Incident</button>
+                        <button class="btn-action" onclick="dismissEvent('${event.id}')">Dismiss</button>
+                    </div>
+                `;
+                
+                eventsList.appendChild(eventItem);
+            });
+        }
+
+        // Initialize Charts
+        function initCharts() {
+            initThreatChart();
+            initVectorChart();
+        }
+
+        // Threat Activity Chart
+        function initThreatChart() {
+            const ctx = document.getElementById('threatChart').getContext('2d');
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: Array.from({length: 24}, (_, i) => `${String(i).padStart(2, '0')}:00`),
+                    datasets: [{
+                        label: 'Critical Threats',
+                        data: [2, 1, 3, 8, 4, 2, 1, 5, 12, 8, 6, 9, 15, 11, 7, 4, 8, 12, 9, 6, 3, 2, 4, 1],
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }, {
+                        label: 'High Threats',
+                        data: [5, 3, 7, 12, 8, 6, 4, 9, 18, 15, 11, 14, 22, 16, 12, 8, 13, 19, 14, 10, 6, 4, 7, 3],
+                        borderColor: '#f59e0b',
+                        backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#f1f5f9'
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: '#334155' }
+                        },
+                        y: {
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: '#334155' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Attack Vector Chart
+        function initVectorChart() {
+            const ctx = document.getElementById('vectorChart').getContext('2d');
+            
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Phishing', 'Malware', 'Brute Force', 'SQL Injection', 'DDoS', 'Other'],
+                    datasets: [{
+                        data: [35, 25, 15, 10, 8, 7],
+                        backgroundColor: [
+                            '#ef4444',
+                            '#f59e0b',
+                            '#06b6d4',
+                            '#8b5cf6',
+                            '#10b981',
+                            '#6b7280'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#f1f5f9',
+                                padding: 15
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Show Incident Details
+        function showIncidentDetails(incident) {
+            const modal = document.getElementById('incidentModal');
+            const title = document.getElementById('modalTitle');
+            const body = document.getElementById('modalBody');
+            
+            title.textContent = `${incident.id} - ${incident.title}`;
+            
+            body.innerHTML = `
+                <div style="display: grid; gap: 1.5rem;">
+                    <div>
+                        <h4 style="color: var(--accent-blue); margin-bottom: 0.5rem;">Incident Overview</h4>
+                        <div style="background: var(--tertiary-bg); padding: 1rem; border-radius: 6px;">
+                            <p><strong>Priority:</strong> <span class="incident-priority ${incident.priority}">${incident.priority}</span></p>
+                            <p><strong>Status:</strong> <span class="status-badge ${incident.status}">${incident.status}</span></p>
+                            <p><strong>Assignee:</strong> ${incident.assignee}</p>
+                            <p><strong>Created:</strong> ${incident.created.toLocaleString()}</p>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 style="color: var(--accent-blue); margin-bottom: 0.5rem;">Description</h4>
+                        <p style="line-height: 1.6;">${incident.description}</p>
+                    </div>
+                    
+                    <div>
+                        <h4 style="color: var(--accent-blue); margin-bottom: 0.5rem;">Attack Vector</h4>
+                        <div style="background: var(--tertiary-bg); padding: 1rem; border-radius: 6px; font-family: 'Roboto Mono', monospace;">
+                            ${incident.attack_vector}
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 style="color: var(--accent-blue); margin-bottom: 0.5rem;">Affected Systems</h4>
+                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                            ${incident.affected_systems.map(system => `<span style="background: var(--tertiary-bg); padding: 0.5rem; border-radius: 4px; font-family: 'Roboto Mono', monospace;">${system}</span>`).join('')}
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                        <button class="btn-action primary" onclick="takeAction('investigate', '${incident.id}')">
+                            <i class="fas fa-search"></i> Investigate
+                        </button>
+                        <button class="btn-action" onclick="takeAction('escalate', '${incident.id}')">
+                            <i class="fas fa-exclamation-triangle"></i> Escalate
+                        </button>
+                        <button class="btn-action" onclick="takeAction('contain', '${incident.id}')">
+                            <i class="fas fa-shield-alt"></i> Contain
+                        </button>
+                        <button class="btn-action" onclick="takeAction('resolve', '${incident.id}')">
+                            <i class="fas fa-check"></i> Resolve
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            modal.style.display = 'flex';
+        }
+
+        // Close Modal
+        function closeModal() {
+            document.getElementById('incidentModal').style.display = 'none';
+        }
+
+        // Take Action on Incident
+        function takeAction(action, incidentId) {
+            const messages = {
+                investigate: 'Investigation started. Forensic analysis in progress...',
+                escalate: 'Incident escalated to Tier 2 analyst. Email notification sent.',
+                contain: 'Containment procedures initiated. Affected systems isolated.',
+                resolve: 'Incident marked as resolved. Documentation updated.'
+            };
+            
+            showNotification(messages[action] || 'Action completed successfully.');
+            
+            if (action === 'resolve') {
+                socState.incidents = socState.incidents.filter(inc => inc.id !== incidentId);
+                socState.metrics.resolvedToday++;
+                socState.metrics.activeIncidents--;
+                populateIncidents();
+                updateMetricsDisplay();
+            }
+            
+            closeModal();
+        }
+
+        // Create Incident from Event
+        function createIncident(eventId) {
+            const event = socState.events.find(e => e.id === eventId);
+            if (!event) return;
+            
+            const newIncident = {
+                id: `INC-2024-${String(socState.incidents.length + 4).padStart(3, '0')}`,
+                priority: event.severity === 'critical' ? 'critical' : 'high',
+                title: event.title,
+                description: event.description,
+                assignee: 'Auto-assigned',
+                status: 'investigating',
+                created: new Date(),
+                affected_systems: ['TBD'],
+                attack_vector: 'Under Investigation'
+            };
+            
+            socState.incidents.unshift(newIncident);
+            socState.metrics.activeIncidents++;
+            
+            populateIncidents();
+            updateMetricsDisplay();
+            showNotification(`Incident ${newIncident.id} created and assigned for investigation.`);
+        }
+
+        // Dismiss Event
+        function dismissEvent(eventId) {
+            socState.events = socState.events.filter(e => e.id !== eventId);
+            populateEvents();
+            showNotification('Security event dismissed.');
+        }
+
+        // Simulate New Events
+        function simulateNewEvents() {
+            if (socState.feedPaused) return;
+            
+            const newEventTemplates = [
+                {
+                    severity: 'medium',
+                    title: 'Suspicious PowerShell Activity',
+                    description: 'Encoded PowerShell command execution detected on workstation',
+                    source: 'EDR Platform',
+                    category: 'Suspicious Activity',
+                    status: 'investigating'
+                },
+                {
+                    severity: 'high',
+                    title: 'Unauthorized File Access',
+                    description: 'User accessed sensitive files outside normal working hours',
+                    source: 'File Monitoring',
+                    category: 'Data Access',
+                    status: 'investigating'
+                },
+                {
+                    severity: 'low',
+                    title: 'VPN Connection Anomaly',
+                    description: 'VPN connection from unusual geographic location',
+                    source: 'VPN Logs',
+                    category: 'Access Anomaly',
+                    status: 'monitoring'
+                }
+            ];
+            
+            const template = newEventTemplates[Math.floor(Math.random() * newEventTemplates.length)];
+            const newEvent = {
+                ...template,
+                id: `EVT-${String(socState.events.length + 1).padStart(3, '0')}`,
+                timestamp: new Date(),
+                iocs: ['192.168.1.' + Math.floor(Math.random() * 255), 'unknown-process.exe']
+            };
+            
+            socState.events.unshift(newEvent);
+            if (socState.events.length > 20) {
+                socState.events.pop();
+            }
+            
+            populateEvents();
+            
+            if (template.severity === 'critical' || template.severity === 'high') {
+                showAlert(`New ${template.severity} security event: ${template.title}`);
+            }
+        }
+
+        // Update Metrics
+        function updateMetrics() {
+            socState.metrics.criticalAlerts += Math.floor(Math.random() * 3) - 1;
+            socState.metrics.avgResponseTime += (Math.random() - 0.5) * 2;
+            
+            if (socState.metrics.criticalAlerts < 0) socState.metrics.criticalAlerts = 0;
+            if (socState.metrics.avgResponseTime < 1) socState.metrics.avgResponseTime = 1;
+            
+            updateMetricsDisplay();
+        }
+
+        // Update Metrics Display
+        function updateMetricsDisplay() {
+            document.getElementById('criticalAlerts').textContent = socState.metrics.criticalAlerts;
+            document.getElementById('activeIncidentsCount').textContent = socState.metrics.activeIncidents;
+            document.getElementById('avgResponseTime').textContent = socState.metrics.avgResponseTime.toFixed(1);
+            document.getElementById('resolvedToday').textContent = socState.metrics.resolvedToday;
+            document.getElementById('activeIncidents').textContent = `${socState.metrics.activeIncidents} Active Incidents`;
+        }
+
+        // Show Alert Banner
+        function showAlert(message) {
+            const banner = document.getElementById('alertBanner');
+            const messageEl = document.getElementById('alertMessage');
+            
+            messageEl.textContent = message;
+            banner.style.display = 'block';
+            
+            setTimeout(() => {
+                banner.style.display = 'none';
+            }, 5000);
+        }
+
+        // Show Notification
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 80px;
+                right: 20px;
+                background: var(--accent-blue);
+                color: white;
+                padding: 1rem 1.5rem;
+                border-radius: 6px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+                z-index: 1001;
+                animation: slideIn 0.3s ease;
+            `;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        // Utility Functions
+        function getTimeAgo(date) {
+            const now = new Date();
+            const diff = now - date;
+            const minutes = Math.floor(diff / 60000);
+            const hours = Math.floor(diff / 3600000);
+            
+            if (minutes < 60) {
+                return `${minutes} min ago`;
+            } else if (hours < 24) {
+                return `${hours}h ago`;
+            } else {
+                return `${Math.floor(hours / 24)}d ago`;
+            }
+        }
+
+        // Add Event Listeners
+        function addEventListeners() {
+            // Navigation
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', () => switchView(item.dataset.view));
+            });
+            
+            // Incident Tabs
+            document.querySelectorAll('.incident-tab').forEach(tab => {
+                tab.addEventListener('click', () => switchIncidentTab(tab.dataset.tab));
+            });
+            
+            // Feed Controls
+            document.getElementById('pauseFeed').addEventListener('click', toggleFeed);
+            
+            // Modal
+            document.getElementById('incidentModal').addEventListener('click', (e) => {
+                if (e.target.id === 'incidentModal') closeModal();
+            });
+        }
+
+        // Switch View
+        function switchView(view) {
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            document.querySelector(`[data-view="${view}"]`).classList.add('active');
+            
+            document.querySelectorAll('.view-content').forEach(content => {
+                content.style.display = 'none';
+            });
+            document.getElementById(`${view}-view`).style.display = 'block';
+            
+            socState.currentView = view;
+        }
+
+        // Switch Incident Tab
+        function switchIncidentTab(tab) {
+            document.querySelectorAll('.incident-tab').forEach(t => {
+                t.classList.remove('active');
+            });
+            document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+            
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.style.display = 'none';
+            });
+            document.getElementById(`${tab}-incidents`).style.display = 'block';
+            
+            socState.currentTab = tab;
+        }
+
+        // Toggle Feed
+        function toggleFeed() {
+            const button = document.getElementById('pauseFeed');
+            const icon = button.querySelector('i');
+            
+            socState.feedPaused = !socState.feedPaused;
+            
+            if (socState.feedPaused) {
+                icon.className = 'fas fa-play';
+                button.title = 'Resume Feed';
+            } else {
+                icon.className = 'fas fa-pause';
+                button.title = 'Pause Feed';
+            }
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', initSOC);
+
+        // Add some CSS animations
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
