@@ -899,6 +899,7 @@
             }
 
             init() {
+                console.log('SOC Simulator initializing...');
                 this.showLoading();
                 this.generateSampleData();
                 this.setupEventListeners();
@@ -906,7 +907,20 @@
                 this.startDataSimulation();
                 
                 // Hide loading screen after simulation
-                setTimeout(() => this.hideLoading(), 3000);
+                setTimeout(() => {
+                    this.hideLoading();
+                    console.log('SOC Simulator ready! Try clicking navigation items.');
+                }, 3000);
+                
+                // Test navigation after loading
+                setTimeout(() => {
+                    console.log('Testing navigation setup...');
+                    const navItems = document.querySelectorAll('.nav-item');
+                    console.log(`Found ${navItems.length} navigation items`);
+                    navItems.forEach((item, index) => {
+                        console.log(`Nav item ${index}: ${item.getAttribute('data-view')}`);
+                    });
+                }, 3500);
             }
 
             showLoading() {
@@ -1098,43 +1112,71 @@
             }
 
             setupEventListeners() {
-                // Navigation
+                // Navigation - with error handling
                 document.querySelectorAll('.nav-item').forEach(item => {
                     item.addEventListener('click', (e) => {
                         e.preventDefault();
+                        console.log('Navigation clicked:', item.getAttribute('data-view'));
                         
-                        // Update active nav item
-                        document.querySelector('.nav-item.active').classList.remove('active');
-                        item.classList.add('active');
-                        
-                        // Switch content view
-                        const view = item.getAttribute('data-view');
-                        this.switchView(view);
+                        try {
+                            // Update active nav item
+                            const currentActive = document.querySelector('.nav-item.active');
+                            if (currentActive) {
+                                currentActive.classList.remove('active');
+                            }
+                            item.classList.add('active');
+                            
+                            // Switch content view
+                            const view = item.getAttribute('data-view');
+                            console.log('Switching to view:', view);
+                            this.switchView(view);
+                        } catch (error) {
+                            console.error('Navigation error:', error);
+                        }
                     });
                 });
 
-                // Chart period buttons
-                document.querySelectorAll('[data-period]').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        document.querySelector('[data-period].active').classList.remove('active');
-                        btn.classList.add('active');
-                        this.updateChart(btn.getAttribute('data-period'));
-                    });
-                });
-
-                // View All Incidents button
+                // Chart period buttons - with delegation
                 document.addEventListener('click', (e) => {
-                    if (e.target.closest('.btn') && e.target.closest('.btn').textContent.includes('View All')) {
+                    // Handle period buttons
+                    if (e.target.hasAttribute('data-period')) {
+                        const currentActive = document.querySelector('[data-period].active');
+                        if (currentActive) {
+                            currentActive.classList.remove('active');
+                        }
+                        e.target.classList.add('active');
+                        this.updateChart(e.target.getAttribute('data-period'));
+                    }
+                    
+                    // Handle View All button
+                    if (e.target.textContent && e.target.textContent.includes('View All')) {
+                        e.preventDefault();
+                        console.log('View All clicked');
+                        
+                        // Switch to incidents view
+                        const currentActive = document.querySelector('.nav-item.active');
+                        if (currentActive) {
+                            currentActive.classList.remove('active');
+                        }
+                        
+                        const incidentsNav = document.querySelector('[data-view="incidents"]');
+                        if (incidentsNav) {
+                            incidentsNav.classList.add('active');
+                        }
+                        
                         this.switchView('incidents');
-                        document.querySelector('[data-view="incidents"]').classList.add('active');
-                        document.querySelector('.nav-item.active').classList.remove('active');
                     }
                 });
 
                 // Notification close
-                document.querySelector('.notification-close').addEventListener('click', () => {
-                    document.getElementById('notificationTemplate').classList.remove('show');
-                });
+                const notificationClose = document.querySelector('.notification-close');
+                if (notificationClose) {
+                    notificationClose.addEventListener('click', () => {
+                        document.getElementById('notificationTemplate').classList.remove('show');
+                    });
+                }
+
+                console.log('Event listeners attached successfully');
             }
 
             updateDateTime() {
