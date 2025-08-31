@@ -1188,12 +1188,49 @@
                     // Handle other action buttons
                     if (e.target.closest('.btn')) {
                         const btnText = e.target.textContent || e.target.closest('.btn').textContent;
-                        if (btnText.includes('View') && !btnText.includes('View All')) {
+                        console.log('Button clicked:', btnText);
+                        
+                        // Digital Forensics buttons
+                        if (btnText.includes('Acquire Disk Image')) {
+                            this.showForensicsAction('Disk Image', 'Starting disk imaging process for endpoint WIN-2019-SRV01...');
+                        } else if (btnText.includes('Memory Dump')) {
+                            this.showForensicsAction('Memory Dump', 'Acquiring memory dump from target system. This may take 5-10 minutes...');
+                        } else if (btnText.includes('Network Capture')) {
+                            this.showForensicsAction('Network Capture', 'Starting packet capture on network interface. Collecting traffic data...');
+                        }
+                        
+                        // Threat Hunting buttons
+                        else if (btnText.includes('Execute Query')) {
+                            this.executeHuntingQuery();
+                        }
+                        
+                        // Containment buttons
+                        else if (btnText.includes('Block IP Address')) {
+                            this.showContainmentAction('IP Block', 'Malicious IP 192.168.1.100 has been blocked on all firewalls');
+                        } else if (btnText.includes('Isolate Endpoint')) {
+                            this.showContainmentAction('Endpoint Isolation', 'Endpoint WIN-DESKTOP-001 has been isolated from network');
+                        } else if (btnText.includes('Disable User Account')) {
+                            this.showContainmentAction('Account Disabled', 'User account john.doe@company.com has been temporarily disabled');
+                        } else if (btnText.includes('Update Firewall Rules')) {
+                            this.showContainmentAction('Firewall Updated', 'New firewall rules deployed to block malicious traffic patterns');
+                        }
+                        
+                        // Playbook buttons
+                        else if (btnText.includes('Malware Incident Response')) {
+                            this.executePlaybook('Malware Response', 'Initiating malware incident response procedures...');
+                        } else if (btnText.includes('Phishing Response')) {
+                            this.executePlaybook('Phishing Response', 'Starting phishing email investigation and user notification...');
+                        } else if (btnText.includes('Data Breach Response')) {
+                            this.executePlaybook('Data Breach Response', 'Activating data breach containment and legal notification procedures...');
+                        } else if (btnText.includes('Insider Threat Response')) {
+                            this.executePlaybook('Insider Threat Response', 'Beginning insider threat investigation and evidence preservation...');
+                        }
+                        
+                        // General action buttons
+                        else if (btnText.includes('View') && !btnText.includes('View All')) {
                             this.showIncidentDetails();
                         } else if (btnText.includes('Details')) {
                             this.showThreatDetails();
-                        } else if (btnText.includes('Execute Query')) {
-                            this.executeHuntingQuery();
                         }
                     }
                 });
