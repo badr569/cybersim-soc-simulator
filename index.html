@@ -1166,6 +1166,36 @@
                         
                         this.switchView('incidents');
                     }
+
+                    // Handle New Incident button
+                    if (e.target.textContent && e.target.textContent.includes('New Incident')) {
+                        e.preventDefault();
+                        this.showNewIncidentModal();
+                    }
+
+                    // Handle Refresh button
+                    if (e.target.textContent && e.target.textContent.includes('Refresh')) {
+                        e.preventDefault();
+                        this.refreshThreatFeed();
+                    }
+
+                    // Handle Filter button
+                    if (e.target.textContent && e.target.textContent.includes('Filter')) {
+                        e.preventDefault();
+                        this.showFilterOptions();
+                    }
+
+                    // Handle other action buttons
+                    if (e.target.closest('.btn')) {
+                        const btnText = e.target.textContent || e.target.closest('.btn').textContent;
+                        if (btnText.includes('View') && !btnText.includes('View All')) {
+                            this.showIncidentDetails();
+                        } else if (btnText.includes('Details')) {
+                            this.showThreatDetails();
+                        } else if (btnText.includes('Execute Query')) {
+                            this.executeHuntingQuery();
+                        }
+                    }
                 });
 
                 // Notification close
